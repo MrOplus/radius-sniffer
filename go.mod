@@ -1,4 +1,4 @@
-module RadiusSniffer
+module github.com/kooroshh/radius-sniffer
 
 go 1.18
 
