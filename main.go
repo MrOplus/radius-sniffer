@@ -88,18 +88,20 @@ func handlePacket(data []byte) {
 		case layers.LayerTypeRADIUS:
 			username := ""
 			password := ""
-			for _, attr := range radius.Attributes {
-				switch attr.Type {
-				case layers.RADIUSAttributeTypeUserName:
-					username = string(attr.Value)
-				case layers.RADIUSAttributeTypeUserPassword:
-					passwordTmp, err := UserPassword(attr.Value, []byte(*secret), radius.Authenticator)
-					if err == nil {
-						password = string(passwordTmp)
+			if (radius.Code == layers.RADIUSCodeAccessRequest) && (len(radius.Attributes) > 0) {
+				for _, attr := range radius.Attributes {
+					if attr.Type == layers.RADIUSAttributeTypeUserName {
+						username = string(attr.Value)
+					} else if attr.Type == layers.RADIUSAttributeTypeUserPassword {
+						passwordBytes, err := UserPassword(attr.Value, []byte(*secret), radius.Authenticator)
+						if err != nil {
+							log.Fatal(err)
+						}
+						password = string(passwordBytes)
 					}
 				}
+				emitRadiusEvent(username, password)
 			}
-			emitRadiusEvent(username, password)
 		}
 	}
 }
